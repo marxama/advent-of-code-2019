@@ -5,7 +5,7 @@
   (-> mass (/ 3) long (- 2)))
 
 (defn parse-input []
-  (->> "resources/day1_input"
+  (->> "resources/day01_input"
        slurp
        string/split-lines
        (map #(Long/parseLong %))))
