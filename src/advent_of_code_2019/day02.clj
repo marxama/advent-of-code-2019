@@ -44,14 +44,14 @@
          1 a
          2 b))
 
-(defn solution-part-1 []
+(defn solve-part-1 []
   (-> (parse-input)
       (set-parameters 12 2)
       run-program
       :memory
       first))
 
-(defn solution-part-2 []
+(defn solve-part-2 []
   (let [program (parse-input)
         
         {:keys [noun verb]}

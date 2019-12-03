@@ -10,7 +10,7 @@
        string/split-lines
        (map #(Long/parseLong %))))
 
-(defn solution-part-1 []
+(defn solve-part-1 []
   (->> (parse-input)
        (map fuel-required)
        (reduce +)))
@@ -22,7 +22,7 @@
        (take-while pos?)
        (reduce +)))
 
-(defn solution-part-2 []
+(defn solve-part-2 []
   (->> (parse-input)
        (map enhanced-fuel-required)
        (reduce +)))
