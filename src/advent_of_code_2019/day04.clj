@@ -1,12 +1,8 @@
-(ns advent-of-code-2019.day04)
+(ns advent-of-code-2019.day04
+  (:require [advent-of-code-2019.utils :refer [digits]]))
 
 (defn input-range []
   (range 272091 815433))
-
-(defn digits [n]
-  (if (< n 10)
-    [n]
-    (concat (digits (quot n 10)) [(mod n 10)])))
 
 (defn non-decreasing? [coll]
   (apply <= coll))
