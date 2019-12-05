@@ -26,13 +26,23 @@
            (store-value state c
                         (+ (get-value state a)
                            (get-value state b))))}
-   
+
    2 {:operand-count 3
       :f (fn [state a b c]
            (store-value state c
                         (* (get-value state a)
                            (get-value state b))))}
-   
+
+   3 {:operand-count 1
+      :f (fn [{:keys [input] :as state} a]
+           (-> state
+               (store-value a (first input))
+               (update :input rest)))}
+
+   4 {:operand-count 1
+      :f (fn [state a]
+           (update state :output conj (get-value state a)))}
+
    99 {:operand-count 0
        :f #(assoc % :terminated? true)}})
 
@@ -49,9 +59,14 @@
     (-> (apply f state operands)
         (update :pc + 1 operand-count))))
 
-(defn run-program [program]
-  (->> {:memory program
-        :pc 0}
-       (iterate step)
-       (drop-while (complement :terminated?))
-       first))
+(defn run-program
+  ([program]
+   (run-program program []))
+  ([program input]
+   (->> {:memory program
+         :pc 0
+         :input input
+         :output []}
+        (iterate step)
+        (drop-while (complement :terminated?))
+        first)))
