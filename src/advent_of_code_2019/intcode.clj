@@ -34,14 +34,42 @@
                            (get-value state b))))}
 
    3 {:operand-count 1
-      :f (fn [{:keys [input] :as state} a]
+      :f (fn [{[input remaining-input] :input :as state} a]
            (-> state
-               (store-value a (first input))
-               (update :input rest)))}
+               (store-value a input)
+               (assoc :input remaining-input)))}
 
    4 {:operand-count 1
       :f (fn [state a]
            (update state :output conj (get-value state a)))}
+
+   5 {:operand-count 2
+      :manually-updates-pc? true
+      :f (fn [state a b]
+           (if-not (zero? (get-value state a))
+             (assoc state :pc (get-value state b))
+             (update state :pc + 3)))}
+
+   6 {:operand-count 2
+      :manually-updates-pc? true
+      :f (fn [state a b]
+           (if (zero? (get-value state a))
+             (assoc state :pc (get-value state b))
+             (update state :pc + 3)))}
+
+   7 {:operand-count 3
+      :f (fn [state a b c]
+           (store-value state c
+                        (if (< (get-value state a) (get-value state b))
+                          1
+                          0)))}
+
+   8 {:operand-count 3
+      :f (fn [state a b c]
+           (store-value state c
+                        (if (= (get-value state a) (get-value state b))
+                          1
+                          0)))}
 
    99 {:operand-count 0
        :f #(assoc % :terminated? true)}})
@@ -53,11 +81,11 @@
 
 (defn step [{:keys [pc memory] :as state}]
   (let [[opcode parameter-modes] (parse-current-instruction state)
-        {:keys [operand-count f]} (instructions opcode)
+        {:keys [operand-count f manually-updates-pc?]} (instructions opcode)
         operand-values (->> (range operand-count) (map #(+ % pc 1)) (map #(get memory %)))
         operands (partition 2 (interleave operand-values (concat parameter-modes (repeat 0))))]
-    (-> (apply f state operands)
-        (update :pc + 1 operand-count))))
+    (cond-> (apply f state operands)
+      (not manually-updates-pc?) (update :pc + 1 operand-count))))
 
 (defn run-program
   ([program]

@@ -4,12 +4,17 @@
 (defn parse-input []
   (intcode/parse-input "resources/day05_input"))
 
-(defn solve-part-1 []
+(defn solve [id]
   (let [output (-> (parse-input)
-                   (intcode/run-program [1])
+                   (intcode/run-program [id])
                    :output)
         test-codes (butlast output)
         diagnostic-code (last output)]
     (assert (every? zero? test-codes) "Test(s) failed")
     diagnostic-code))
 
+(defn solve-part-1 []
+  (solve 1))
+
+(defn solve-part-2 []
+  (solve 5))
