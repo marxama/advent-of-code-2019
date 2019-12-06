@@ -17,18 +17,19 @@
        (apply merge)))
 
 (defn solve-part-1 []
-  (let [orbit-lookup (get-orbit-lookup (parse-input))
-        objects (keys orbit-lookup)]
-    (->> objects
+  (let [orbit-lookup (get-orbit-lookup (parse-input))]
+    (->> (keys orbit-lookup)
          (map #(get-path-to-root orbit-lookup %))
          (map (comp dec count))
          (reduce +))))
 
 (defn solve-part-2 []
-  (let [orbit-lookup (get-orbit-lookup (parse-input))
-        [you-objects san-objects] (->> ["YOU" "SAN"]
-                                       (map #(get-path-to-root orbit-lookup %))
-                                       (map rest)
-                                       (map set))
-        [distinct-you-objects distinct-san-objects] (data/diff you-objects san-objects)]
-    (+ (count distinct-you-objects) (count distinct-san-objects))))
+  (let [orbit-lookup (get-orbit-lookup (parse-input))]
+    (->> ["YOU" "SAN"]
+         (map #(get-path-to-root orbit-lookup %))
+         (map rest) ; Do not include "YOU" and "SAN" themselves
+         (map set)
+         (apply data/diff)
+         (take 2) ; take distinct objects in YOU and SAN paths
+         (map count)
+         (reduce +))))
