@@ -27,9 +27,9 @@
   (let [orbit-lookup (get-orbit-lookup (parse-input))]
     (->> ["YOU" "SAN"]
          (map #(get-path-to-root orbit-lookup %))
-         (map rest) ; Do not include "YOU" and "SAN" themselves
+         (map rest) ; do not include "YOU" and "SAN" themselves
          (map set)
-         (apply data/diff)
+         (apply data/diff) ; more efficient approaches obviously exist
          (take 2) ; take distinct objects in YOU and SAN paths
          (map count)
          (reduce +))))
