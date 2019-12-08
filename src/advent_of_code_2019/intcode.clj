@@ -34,10 +34,12 @@
                            (get-value state b))))}
 
    3 {:operand-count 1
-      :f (fn [{[input remaining-input] :input :as state} a]
-           (-> state
-               (store-value a input)
-               (assoc :input remaining-input)))}
+      :f (fn [{[input & remaining-input] :input :as state} a]
+           (if input
+             (-> state
+                 (store-value a input)
+                 (assoc :input remaining-input))
+             (assoc state :awaiting-input? true)))}
 
    4 {:operand-count 1
       :f (fn [state a]
@@ -83,18 +85,23 @@
   (let [[opcode parameter-modes] (parse-current-instruction state)
         {:keys [operand-count f manually-updates-pc?]} (instructions opcode)
         operand-values (->> (range operand-count) (map #(+ % pc 1)) (map #(get memory %)))
-        operands (partition 2 (interleave operand-values (concat parameter-modes (repeat 0))))]
-    (cond-> (apply f state operands)
-      (not manually-updates-pc?) (update :pc + 1 operand-count))))
+        operands (partition 2 (interleave operand-values (concat parameter-modes (repeat 0))))
+        {:keys [awaiting-input? terminated?] :as new-state} (apply f state operands)]
+    (cond-> new-state
+      (not (or manually-updates-pc? awaiting-input? terminated?)) (update :pc + 1 operand-count))))
+
+(defn build-program [memory]
+  {:memory memory
+   :pc 0
+   :output []})
 
 (defn run-program
   ([program]
    (run-program program []))
   ([program input]
-   (->> {:memory program
-         :pc 0
-         :input input
-         :output []}
+   (->> (assoc program
+               :input input
+               :awaiting-input? false)
         (iterate step)
-        (drop-while (complement :terminated?))
+        (drop-while (complement (some-fn :terminated? :awaiting-input?)))
         first)))

@@ -12,6 +12,7 @@
 (defn solve-part-1 []
   (-> (parse-input)
       (set-parameters 12 2)
+      intcode/build-program
       intcode/run-program
       :memory
       first))
@@ -26,6 +27,7 @@
                 :verb verb
                 :result (-> program
                             (set-parameters noun verb)
+                            intcode/build-program
                             intcode/run-program
                             :memory
                             first)})

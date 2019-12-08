@@ -6,6 +6,7 @@
 
 (defn solve [id]
   (let [output (-> (parse-input)
+                   intcode/build-program
                    (intcode/run-program [id])
                    :output)
         test-codes (butlast output)
