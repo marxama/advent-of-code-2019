@@ -14,21 +14,27 @@
     (into memory (repeat (- size (count memory)) 0))
     memory))
 
-(defn store-value [state [location] value]
-  (-> state
-      (update :memory increase-memory-to-fit location)
-      (assoc-in [:memory location] value)))
-
 (def ^:const POSITION_MODE 0)
 (def ^:const IMMEDIATE_MODE 1)
 (def ^:const RELATIVE_MODE 2)
 
-(defn get-value [{:keys [memory relative-base]} [value mode]]
-  (or (condp = mode
-        POSITION_MODE (get memory value)
-        IMMEDIATE_MODE value
-        RELATIVE_MODE (get memory (+ value relative-base)))
+(defn get-memory-location [{:keys [relative-base]} [value mode]]
+  (condp = mode
+    POSITION_MODE value
+    IMMEDIATE_MODE nil
+    RELATIVE_MODE (+ relative-base value)))
+
+(defn get-value [{:keys [memory] :as state} [value mode :as parameter]]
+  (or (if (= mode IMMEDIATE_MODE)
+        value
+        (get memory (get-memory-location state parameter)))
       0))
+
+(defn store-value [state location-parameter value]
+  (let [location (get-memory-location state location-parameter)]
+    (-> state
+        (update :memory increase-memory-to-fit location)
+        (assoc-in [:memory location] value))))
 
 (def instructions
   {1 {:operand-count 3
@@ -98,7 +104,9 @@
 (defn step [{:keys [pc memory] :as state}]
   (let [[opcode parameter-modes] (parse-current-instruction state)
         {:keys [operand-count f manually-updates-pc?]} (instructions opcode)
-        operand-values (->> (range operand-count) (map #(+ % pc 1)) (map #(get memory %)))
+        operand-values (->> (range operand-count)
+                            (map #(+ % pc 1))
+                            (map #(get memory %)))
         operands (partition 2 (interleave operand-values (concat parameter-modes (repeat 0))))
         {:keys [awaiting-input? terminated?] :as new-state} (apply f state operands)]
     (cond-> new-state
