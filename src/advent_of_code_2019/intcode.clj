@@ -9,16 +9,26 @@
       (->> (map #(Integer/parseInt %))
            vec)))
 
+(defn increase-memory-to-fit [memory size]
+  (if (< (count memory) size)
+    (into memory (repeat (- size (count memory)) 0))
+    memory))
+
 (defn store-value [state [location] value]
-  (assoc-in state [:memory location] value))
+  (-> state
+      (update :memory increase-memory-to-fit location)
+      (assoc-in [:memory location] value)))
 
 (def ^:const POSITION_MODE 0)
 (def ^:const IMMEDIATE_MODE 1)
+(def ^:const RELATIVE_MODE 2)
 
-(defn get-value [{:keys [memory]} [value mode]]
-  (condp = mode
-    POSITION_MODE (get memory value)
-    IMMEDIATE_MODE value))
+(defn get-value [{:keys [memory relative-base]} [value mode]]
+  (or (condp = mode
+        POSITION_MODE (get memory value)
+        IMMEDIATE_MODE value
+        RELATIVE_MODE (get memory (+ value relative-base)))
+      0))
 
 (def instructions
   {1 {:operand-count 3
@@ -73,6 +83,10 @@
                           1
                           0)))}
 
+   9 {:operand-count 1
+      :f (fn [state a]
+           (update state :relative-base + (get-value state a)))}
+
    99 {:operand-count 0
        :f #(assoc % :terminated? true)}})
 
@@ -93,6 +107,7 @@
 (defn build-program [memory]
   {:memory memory
    :pc 0
+   :relative-base 0
    :output []})
 
 (defn run-program
