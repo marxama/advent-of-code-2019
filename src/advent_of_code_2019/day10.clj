@@ -3,11 +3,9 @@
 
 (defn parse-row [row s]
   (->> s
-       seq
        (map-indexed (fn [column c]
-                      (if (= c \#)
-                        [column row]
-                        nil)))
+                      (when (= c \#)
+                        [column row])))
        (remove nil?)))
 
 (defn parse-string [s]
@@ -18,8 +16,18 @@
 (defn parse-input []
   (-> "resources/day10_input" slurp parse-string))
 
-(defn create-vector [[x1 y1] [x2 y2]]
-  [(- x2 x1) (- y1 y2)])
+(defn vec- [a b]
+  (map - a b))
+
+(defn vec+ [a b]
+  (map + a b))
+
+;; This needs to be bigger than any of the coordinates in play - could be determined
+;; during runtime to make it more generic, but this suffices for our needs.
+(def ^:const BIG_NUMBER 10000)
+
+(defn sign [x]
+  (if (neg? x) -1 1))
 
 (defn poor-mans-normalized-vector
   "Given two vectors that point in the same direction, this function will return
@@ -28,18 +36,20 @@
   It's not quite the normalized vector of the passed argument,
   but for our purposes, it fills the same function (but is more efficient)."
   [[x y]]
-  (let [denominator (Math/abs (if (zero? x) y x))]
-    [(/ x denominator) (/ y denominator)]))
+  (if (zero? x)
+    [0 (sign y)]
+    (let [denominator (Math/abs x)]
+      ; Making y very small here makes it easier to implement the rotational sort order later on
+      [(sign x) (/ y denominator BIG_NUMBER)])))
 
 (defn vectors-to-all-asteroids [from asteroids]
   (->> asteroids
        (remove #{from})
-       (map #(zipmap [:pos :vec] [% (create-vector from %)]))))
+       (map #(vec- % from))))
 
 (defn visible-asteroids [from asteroids]
   (->> asteroids
        (vectors-to-all-asteroids from)
-       (map :vec)
        (map poor-mans-normalized-vector)
        distinct))
 
@@ -56,50 +66,32 @@
 (defn length-squared [[x y]]
   (+ (* x x) (* y y)))
 
-(defn sign [x]
-  (if (neg? x) -1 1))
+(defn vec-rot-sort [[x y]]
+  (+ (* BIG_NUMBER (dec y) (sign x))
+     (* x BIG_NUMBER -1/2)))
 
-;; THERE HAS TO BE A BETTER WAY ARGH
-(defn vec< [[x1 y1 :as a] [x2 y2 :as b]]
-  (cond
-    (= a b) false
-    (and (zero? x1) (zero? x2)) (> y1 y2)
-    (and (zero? y1) (zero? y2)) (> x1 x2)
-    (zero? x1) (or (pos? y1)
-                   (neg? x2))
-    (zero? x2) (and (neg? y2)
-                    (pos? x1))
-    (and (pos? x1) (pos? x2)) (> y1 y2)
-    (pos? x1) true
-    (pos? x2) false
-    :else (< y1 y2)))
-
-(defn cycle-flatten
+(defn cycle-concat-first
   "Takes a coll-of-colls, and returns a seq with the first item of each coll,
   followed by the second item of each coll, and so on. Note that when a coll
   is emptied in this process, it will be ignored in further cycles - in other
   words, some colls may have many more items than others."
   [coll-of-colls]
-  (loop [coll-of-colls coll-of-colls
-         result ()]
-    (if (seq coll-of-colls)
-      (recur
-       (keep next coll-of-colls)
-       (concat result (map first coll-of-colls)))
-      result)))
+  (when (seq coll-of-colls)
+    (concat (map first coll-of-colls)
+            (lazy-seq (cycle-concat-first (keep next coll-of-colls))))))
 
 (defn get-vaporization-order [from asteroids]
   (->> asteroids
        (vectors-to-all-asteroids from)
-       (group-by (comp poor-mans-normalized-vector :vec))
-       (sort-by first (comparator vec<))
+       (group-by poor-mans-normalized-vector)
+       (sort-by (comp vec-rot-sort first))
        (map val)
-       (map #(sort-by (comp length-squared :vec) %))
-       cycle-flatten))
+       (map #(sort-by length-squared %))
+       cycle-concat-first
+       (map (partial vec+ from))))
 
 (defn solve-part-2 []
   (->> (parse-input)
        (get-vaporization-order [14 17])
        (drop 199)
-       first
-       :pos))
+       first))
