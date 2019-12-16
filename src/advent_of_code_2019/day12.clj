@@ -18,7 +18,8 @@
 (defn step-moons [moons]
   (->> moons
        (map #(reduce apply-gravity % moons))
-       (map apply-velocity)))
+       (map apply-velocity)
+       doall))  ;; Important to avoid StackOverflowError
 
 (defn step [state]
   (-> state
