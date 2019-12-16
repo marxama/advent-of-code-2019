@@ -1,5 +1,6 @@
 (ns advent-of-code-2019.day10
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string
+            [advent-of-code-2019.math :as math]]))
 
 (defn parse-row [row s]
   (->> s
@@ -15,12 +16,6 @@
 
 (defn parse-input []
   (-> "resources/day10_input" slurp parse-string))
-
-(defn vec- [a b]
-  (map - a b))
-
-(defn vec+ [a b]
-  (map + a b))
 
 ;; This needs to be bigger than any of the coordinates in play - could be determined
 ;; during runtime to make it more generic, but this suffices for our needs.
@@ -45,7 +40,7 @@
 (defn vectors-to-all-asteroids [from asteroids]
   (->> asteroids
        (remove #{from})
-       (map #(vec- % from))))
+       (map #(math/vec- % from))))
 
 (defn visible-asteroids [from asteroids]
   (->> asteroids
@@ -88,7 +83,7 @@
        (map val)
        (map #(sort-by length-squared %))
        cycle-concat-first
-       (map (partial vec+ from))))
+       (map (partial math/vec+ from))))
 
 (defn solve-part-2 []
   (->> (parse-input)

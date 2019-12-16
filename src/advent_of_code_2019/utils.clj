@@ -22,3 +22,9 @@
                        (if (seq r)
                          (map #(cons x %) (permutations r))
                          [[x]]))))))))
+
+(defn render-image [width height pixels]
+  (doseq [row (partition width pixels)]
+    (doseq [pixel row]
+      (print (if (= pixel \0) \⬛ \⬜)))
+    (println)))

@@ -1,4 +1,5 @@
-(ns advent-of-code-2019.day08)
+(ns advent-of-code-2019.day08
+  (:require [advent-of-code-2019.utils :as utils]))
 
 (defn parse-input []
   (-> "resources/day08_input" slurp seq))
@@ -31,14 +32,8 @@
          (partition layer-count)
          (map get-pixel-color))))
 
-(defn render-image [width height pixels]
-  (doseq [row (partition width pixels)]
-    (doseq [pixel row]
-      (print (if (= pixel \0) \⬛ \⬜)))
-    (println)))
-
 (defn solve-part-2 []
   (->> (parse-input)
        (get-layers 25 6)
        get-image-colors
-       (render-image 25 6)))
+       (utils/render-image 25 6)))

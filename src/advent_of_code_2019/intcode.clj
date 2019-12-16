@@ -6,7 +6,7 @@
   (-> f
       slurp
       (string/split #",")
-      (->> (map #(Integer/parseInt %))
+      (->> (map #(Long/parseLong %))
            vec)))
 
 (defn increase-memory-to-fit [memory size]
@@ -120,10 +120,10 @@
 
 (defn run-program
   ([program]
-   (run-program program []))
+   (run-program program nil))
   ([program input]
    (->> (assoc program
-               :input input
+               :input (or input [])
                :awaiting-input? false)
         (iterate step)
         (drop-while (complement (some-fn :terminated? :awaiting-input?)))
